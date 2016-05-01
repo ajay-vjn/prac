@@ -1,7 +1,5 @@
 package com.learn.ThreadEx;
 
-import java.util.Objects;
-
 /**
  * Created by Ajay on 04-Apr-16.
  */
