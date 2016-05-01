@@ -45,6 +45,9 @@ public class ThreadDeadLock2 {
         @Override
         public void run() {
             doWork();
+            //In this case there would be no deadlock as the second thread is invoked after first thread
+            // release the lock.
+            //doWork();
             synchronized (obj2){
                 System.out.println("Lock on obj2 by "+ this.getName());
                 doWork();
