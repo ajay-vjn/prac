@@ -1,69 +1,53 @@
 package com.learn.ThreadEx;
 
-import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Phaser;
 
-/**
- * Created by Ajay on 18-Apr-16.
- */
-public class PhaserExample implements Runnable
-{
-    static Phaser phaser = new Phaser();
-
-    PhaserExample() {
+public class PhaserExample {
+    public static void main(String[] args) throws Exception {
+        Phaser phaser = new Phaser(3);
         phaser.register();
+
+        ExecutorService manager = Executors.newFixedThreadPool(3);
+        manager.submit(new PhaserTask(phaser, 8, 1));
+        Thread.sleep(5000);
+        manager.submit(new PhaserTask(phaser, 6, 3));
+        Thread.sleep(5000);
+        manager.submit(new PhaserTask(phaser, 4, 5));
+        manager.shutdown();
+
+        phaser.arriveAndDeregister();
     }
+}
 
+class PhaserTask implements Runnable {
+    Phaser phaser = null;
+    private int waitTimeOne;
+    private int waitTimeTwo;
 
-    public static void main(String[] args) throws InterruptedException
-    {
-        phaser.register();//register self... phaser waiting for 1 party (thread)
-
-        System.out.println("Phasecount is "+phaser.getPhase());
-
-        new Thread(new PhaserExample()).start();
-        new Thread(new PhaserExample()).start();
-        new Thread(new PhaserExample()).start();
-
-        phaser.arriveAndDeregister();
-        Thread.sleep(8000);
-        System.out.println("Phasecount is "+phaser.getPhase());
-
-        phaser.arriveAndDeregister();
+    public PhaserTask(Phaser phaser, int waitTimeOne, int waitTimeTwo) {
+        this.phaser = phaser;
+        this.waitTimeOne = waitTimeOne;
+        this.waitTimeTwo = waitTimeTwo;
     }
 
     public void run() {
-        try
-        {
-            System.out.println(Thread.currentThread().getName()+" arrived at "+ new Date() +", Barrier: 1");
-            phaser.arriveAndAwaitAdvance();     //1st barrier.
-            Thread.sleep(3000);
+        try {
+            ThreadUtil.printStr("Barrier: 1 starts, waiting for " + waitTimeOne + " seconds");
+            Thread.sleep(1000 * waitTimeOne);
+            phaser.arriveAndAwaitAdvance();
+            ThreadUtil.printStr("Barrier: 1 ends");
 
-            //===============Task 1======================
-            for (int i = 0; i < 5; i++) {
-                System.out.println(Thread.currentThread().getName() + " processing "+i);
-            }
-            System.out.println(Thread.currentThread().getName() + " finished task 1");
-            //===============Task 1======================
+            ThreadUtil.printStr("Barrier: 2 starts, waiting for " + waitTimeTwo + " seconds");
+            Thread.sleep(1000 * waitTimeTwo);
+            phaser.arriveAndAwaitAdvance();
+            ThreadUtil.printStr("Barrier: 2 ends");
 
-            phaser.arriveAndAwaitAdvance();     //2nd barrier.
-            System.out.println(Thread.currentThread().getName()+", Time: "+ new Date()+", Barrier: 2");
-            Thread.sleep(3000);
-
-            //===============Task 2======================
-            for (int i = 0; i < 5; i++) {
-                System.out.println(Thread.currentThread().getName() + " processing "+i);
-            }
-            System.out.println(Thread.currentThread().getName() + " finished task 2");
-            //===============Task 2======================
-
-            phaser.arriveAndAwaitAdvance();     //3rd barrier.
-            System.out.println(Thread.currentThread().getName()+", Time: "+ new Date()+", Barrier: 3");
-        }
-
-        catch (InterruptedException e)
-        {
+            phaser.arriveAndAwaitAdvance();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 }
+
